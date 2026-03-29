@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 let genAI;
 
 function getClient() {
@@ -12,10 +14,6 @@ function getClient() {
     return genAI;
 }
 
-/**
- * Builds a detailed prompt that instructs Gemini to produce a meaningfully
- * tailored resume — not just a light reword.
- */
 function buildPrompt(resumeText, job) {
     return `
 You are an expert resume writer. Your task is to tailor the candidate's resume specifically for the job below.
@@ -32,33 +30,36 @@ ${job.description}
 ${resumeText}
 
 == TAILORING INSTRUCTIONS ==
-Rewrite the resume so it is a strong match for this specific role. Follow these rules strictly:
+This resume must look DISTINCTLY different from a resume tailored for any other role. Follow these rules strictly:
 
-1. SUMMARY: Rewrite the professional summary (2-3 sentences) to directly address the role's core requirements. Mention the job title and at least two key skills from the job description.
+1. SUMMARY: Rewrite the professional summary (2-3 sentences) to directly mention the job title "${job.title}" and use at least 3 specific keywords from the job description above. Do not use generic language.
 
-2. SKILLS: Reorder and prioritize the skills section so the most relevant skills appear first. Add any relevant skills implied by the job description that the candidate plausibly has. Remove or de-emphasize unrelated skills.
+2. SKILLS: Completely reorder the skills section. The top 3 skills must be the most critical ones mentioned in this specific job description. Remove or move to the bottom any skills not relevant to "${job.title}".
 
-3. EXPERIENCE: For each past role, rewrite bullet points to emphasize achievements and responsibilities that map to this job description. Use language and keywords from the job description. Quantify where possible.
+3. EXPERIENCE: For each past role, rewrite bullet points to emphasize achievements that directly map to THIS job's requirements. Use the exact terminology and keywords from the job description. Quantify achievements where possible.
 
-4. SECTION ORDER: If the job is technical (engineering, data, etc.), put Skills before Experience. If the job is leadership or business-focused, put Experience first.
+4. SECTION ORDER:
+   - If "${job.title}" is technical (engineer, developer, ML, DevOps): order is SUMMARY → SKILLS → EXPERIENCE → EDUCATION
+   - If "${job.title}" is leadership or business focused: order is SUMMARY → EXPERIENCE → SKILLS → EDUCATION
 
-5. TONE: Match the tone of the job description. Startups want concise and bold; enterprises want measured and precise.
+5. TONE:
+   - For backend/DevOps/ML roles: precise, technical, metric-driven
+   - For frontend roles: creative, user-focused, collaborative
+   - For full stack roles: versatile, fast-paced, ownership-focused
 
-6. Do NOT invent credentials, degrees, or companies the candidate did not have. You may rephrase and reframe existing experience.
+6. Do NOT invent credentials, degrees, or companies the candidate did not have.
 
-7. Output ONLY the final resume text — no preamble, no explanation, no markdown fences. Use plain text with clear section headers in ALL CAPS (e.g. SUMMARY, SKILLS, EXPERIENCE, EDUCATION).
+7. Output ONLY the final resume text — no preamble, no explanation, no markdown fences. Use plain text with section headers in ALL CAPS (e.g. SUMMARY, SKILLS, EXPERIENCE, EDUCATION).
 
-Produce the tailored resume now:
+Produce the tailored resume for "${job.title}" at ${job.company} now:
 `.trim();
 }
 
-/**
- * Calls Gemini to tailor the resume for a given job.
- * Returns the tailored resume as a plain text string.
- */
 export async function tailorResume(resumeText, job) {
     const client = getClient();
     const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    await sleep(15000);
 
     const prompt = buildPrompt(resumeText, job);
 
