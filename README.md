@@ -117,4 +117,4 @@ Every step that can fail — LLM call, file write, email send — is wrapped in 
 
 ## Demo video
 
-[Link to video — add before submission]
+https://www.loom.com/share/6d5544b10d7642f99d7307681524f4b5 - Link to the Video with detailed working explanation of the project.
